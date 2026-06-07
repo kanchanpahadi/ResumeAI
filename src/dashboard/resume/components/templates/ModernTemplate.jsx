@@ -40,9 +40,7 @@ function ModernTemplate({ resumeInfo }) {
           font-size: 0.72rem; color: #555; margin-bottom: 0.35rem;
           word-break: break-all; line-height: 1.4;
         }
-        .mod-skill-row {
-          margin-bottom: 0.55rem;
-        }
+        .mod-skill-row { margin-bottom: 0.55rem; }
         .mod-skill-name {
           font-size: 0.72rem; color: #444; margin-bottom: 0.2rem;
           display: flex; justify-content: space-between;
@@ -68,7 +66,7 @@ function ModernTemplate({ resumeInfo }) {
         }
       `}</style>
 
-      {/* ── Sidebar ── */}
+      {/* Sidebar */}
       <div className="mod-sidebar" style={{ background: themeColor + '08' }}>
 
         {/* Avatar + name */}
@@ -126,13 +124,17 @@ function ModernTemplate({ resumeInfo }) {
                 <div style={{ fontSize: '0.68rem', color: '#aaa', marginTop: '0.1rem' }}>
                   {edu?.startDate}{edu?.endDate ? ` – ${edu.endDate}` : ''}
                 </div>
+                {edu?.description && (
+                  <div style={{ fontSize: '0.68rem', color: '#555', marginTop: '0.3rem', lineHeight: 1.5 }}
+                    dangerouslySetInnerHTML={{ __html: edu.description }} />
+                )}
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* ── Main ── */}
+      {/* Main */}
       <div className="mod-main">
 
         {/* Summary */}

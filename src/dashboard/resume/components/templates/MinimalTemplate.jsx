@@ -1,9 +1,4 @@
 import React from 'react'
-import PersonalDetailPreview from '../preview/PersonalDetailPreview'
-import SummeryPreview from '../preview/SummeryPreview'
-import ExperiencePreview from '../preview/ExperiencePreview'
-import EducationalPreview from '../preview/EducationalPreview'
-import SkillsPreview from '../preview/SkillsPreview'
 
 function MinimalTemplate({ resumeInfo }) {
   const themeColor = resumeInfo?.themecolor || '#111111'
@@ -101,12 +96,16 @@ function MinimalTemplate({ resumeInfo }) {
                 <div style={{ fontSize: '0.78rem', color: '#666', marginTop: '0.1rem' }}>
                   {edu?.degree}{edu?.major ? ` — ${edu.major}` : ''}
                 </div>
+                {edu?.description && (
+                  <div style={{ fontSize: '0.75rem', color: '#555', marginTop: '0.3rem', lineHeight: 1.6 }}
+                    dangerouslySetInnerHTML={{ __html: edu.description }} />
+                )}
               </div>
             ))}
           </div>
         )}
 
-        {/* Skills — inline tags */}
+        {/* Skills */}
         {resumeInfo?.Skills?.length > 0 && (
           <div className="min-section">
             <div className="min-section-label">Skills</div>

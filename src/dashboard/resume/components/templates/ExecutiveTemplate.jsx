@@ -59,7 +59,7 @@ function ExecutiveTemplate({ resumeInfo }) {
         }
       `}</style>
 
-      {/* ── Dark header ── */}
+      {/* Header */}
       <div className="exec-header" style={{ background: themeColor }}>
         <div className="exec-name">
           {resumeInfo?.firstName} {resumeInfo?.lastName}
@@ -72,7 +72,7 @@ function ExecutiveTemplate({ resumeInfo }) {
         </div>
       </div>
 
-      {/* ── Body ── */}
+      {/* Body */}
       <div className="exec-body">
 
         {/* Summary */}
@@ -81,10 +81,7 @@ function ExecutiveTemplate({ resumeInfo }) {
             <div className="exec-section-label" style={{ color: themeColor, borderColor: themeColor + '40' }}>
               Executive Summary
             </div>
-            <p style={{
-              fontSize: '0.84rem', color: '#444', lineHeight: 1.75,
-              fontStyle: 'italic', margin: 0
-            }}>
+            <p style={{ fontSize: '0.84rem', color: '#444', lineHeight: 1.75, fontStyle: 'italic', margin: 0 }}>
               {resumeInfo.Summary}
             </p>
           </div>
@@ -119,7 +116,6 @@ function ExecutiveTemplate({ resumeInfo }) {
 
         {/* Education + Skills in two columns */}
         <div className="exec-two-col">
-
           {education.length > 0 && (
             <div>
               <div className="exec-section-label" style={{ color: themeColor, borderColor: themeColor + '40' }}>
@@ -136,6 +132,10 @@ function ExecutiveTemplate({ resumeInfo }) {
                   <div style={{ fontSize: '0.7rem', color: '#aaa', marginTop: '0.1rem' }}>
                     {edu?.startDate}{edu?.endDate ? ` – ${edu.endDate}` : ''}
                   </div>
+                  {edu?.description && (
+                    <div style={{ fontSize: '0.75rem', color: '#555', marginTop: '0.3rem', lineHeight: 1.6 }}
+                      dangerouslySetInnerHTML={{ __html: edu.description }} />
+                  )}
                 </div>
               ))}
             </div>

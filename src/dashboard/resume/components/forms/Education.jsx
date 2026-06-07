@@ -1,17 +1,20 @@
 import { Input } from '@/components/ui/input'
 import { useContext, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { LoaderCircle, CheckCircle2, GraduationCap } from 'lucide-react'
+import { LoaderCircle, CheckCircle2, GraduationCap, Sparkles } from 'lucide-react'
 import { ResumeInfoContext } from '@/context/ResumeInfoContext'
 import GlobalApi from './../../../../../service/GlobalApi'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
+import RichTextEditor from '../RichTextEditor'
+import { AIChatSession } from './../../../../../service/AIModal';
 
 function Education() {
   const [educationList, setEducationList] = useState([])
   const { resumeId } = useParams();
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [aiLoading, setAiLoading] = useState(null);
   const { resumeInfo, setResumeInfo } = useContext(ResumeInfoContext);
 
   useEffect(() => {
@@ -38,6 +41,28 @@ function Education() {
 
   const RemoveEducation = () => {
     setEducationList(prev => prev.slice(0, -1));
+  }
+
+  const generateDescription = async (index) => {
+    const item = educationList[index];
+    if (!item.universityName.trim() || !item.degree.trim()) {
+      toast('Please fill in University and Degree first');
+      return;
+    }
+    setAiLoading(index);
+    try {
+      const prompt = `Degree: ${item.degree}${item.major ? `, Major: ${item.major}` : ''}, University: ${item.universityName}. Write ONLY 3-4 bullet points as HTML <ul><li> list for a resume education description. Focus on relevant coursework, achievements and skills. Return ONLY the HTML <ul><li> list, no intro, no explanation. Start directly with <ul>.`;
+
+      const result = await AIChatSession.sendMessage(prompt);
+      const raw = result.response.text();
+      const match = raw.match(/<ul[\s\S]*<\/ul>/i);
+      const cleaned = match ? match[0] : raw.replace(/```html?|```/gi, '').trim();
+      handleChange(index, 'description', cleaned);
+      toast('Description generated!');
+    } catch {
+      toast('Failed to generate, try again');
+    }
+    setAiLoading(null);
   }
 
   const onSave = () => {
@@ -68,7 +93,6 @@ function Education() {
       <h2 className='font-bold text-lg'>Education</h2>
       <p className='text-gray-500 text-sm'>Add your educational background</p>
 
-      {/* Empty state */}
       {educationList.length === 0 && (
         <div className='flex flex-col items-center justify-center py-10 text-center border-2 border-dashed border-gray-200 rounded-lg mt-5'>
           <GraduationCap className='h-8 w-8 text-gray-300 mb-2' />
@@ -89,7 +113,7 @@ function Education() {
                 <label className='text-xs text-gray-500'>University / School Name <span className='text-red-400'>*</span></label>
                 <Input
                   className={!item.universityName.trim() ? 'border-amber-300' : ''}
-                  defaultValue={item.universityName}
+                  value={item.universityName}
                   onChange={(e) => handleChange(index, 'universityName', e.target.value)}
                 />
               </div>
@@ -98,7 +122,7 @@ function Education() {
                 <label className='text-xs text-gray-500'>Degree <span className='text-red-400'>*</span></label>
                 <Input
                   className={!item.degree.trim() ? 'border-amber-300' : ''}
-                  defaultValue={item.degree}
+                  value={item.degree}
                   onChange={(e) => handleChange(index, 'degree', e.target.value)}
                 />
               </div>
@@ -106,7 +130,7 @@ function Education() {
               <div>
                 <label className='text-xs text-gray-500'>Major / Field of Study</label>
                 <Input
-                  defaultValue={item.major}
+                  value={item.major}
                   onChange={(e) => handleChange(index, 'major', e.target.value)}
                 />
               </div>
@@ -115,7 +139,7 @@ function Education() {
                 <label className='text-xs text-gray-500'>Start Date</label>
                 <Input
                   type='date'
-                  defaultValue={item.startDate}
+                  value={item.startDate}
                   onChange={(e) => handleChange(index, 'startDate', e.target.value)}
                 />
               </div>
@@ -124,18 +148,36 @@ function Education() {
                 <label className='text-xs text-gray-500'>End Date</label>
                 <Input
                   type='date'
-                  defaultValue={item.endDate}
+                  value={item.endDate}
                   onChange={(e) => handleChange(index, 'endDate', e.target.value)}
                 />
               </div>
 
               <div className='col-span-2'>
-                <label className='text-xs text-gray-500'>Description</label>
-                <textarea
-                  className='w-full border rounded-md p-2 text-sm mt-1 min-h-[80px] resize-none focus:outline-none focus:ring-2 focus:ring-primary/30'
-                  defaultValue={item.description}
-                  placeholder='Relevant coursework, achievements, activities...'
-                  onChange={(e) => handleChange(index, 'description', e.target.value)}
+                <div className='flex justify-between items-center mb-1'>
+                  <label className='text-xs text-gray-500'>Description</label>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    type='button'
+                    disabled={aiLoading === index}
+                    onClick={() => generateDescription(index)}
+                    className='text-xs h-7 px-2 text-primary gap-1'
+                  >
+                    {aiLoading === index
+                      ? <><LoaderCircle className='h-3 w-3 animate-spin' /> Generating...</>
+                      : <><Sparkles className='h-3 w-3' /> Generate with AI</>
+                    }
+                  </Button>
+                </div>
+                <RichTextEditor
+                  index={index}
+                  label=''
+                  hideAI={true}
+                  defaultValue={item?.description}
+                  onRichTextEditorChange={(value) =>
+                    handleChange(index, 'description', value)
+                  }
                 />
               </div>
 
