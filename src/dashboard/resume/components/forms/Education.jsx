@@ -1,48 +1,53 @@
 import { Input } from '@/components/ui/input'
-import  { useContext, useEffect, useState } from 'react'
-import { Rating } from '@smastrom/react-rating'
-import '@smastrom/react-rating/style.css'
+import { useContext, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { LoaderCircle, CheckCircle2, Lightbulb } from 'lucide-react'
+import { LoaderCircle, CheckCircle2, GraduationCap } from 'lucide-react'
 import { ResumeInfoContext } from '@/context/ResumeInfoContext'
 import GlobalApi from './../../../../../service/GlobalApi'
 import { useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 
-function Skills() {
-  const [skillsList, setSkillsList] = useState([])
+function Education() {
+  const [educationList, setEducationList] = useState([])
   const { resumeId } = useParams();
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const { resumeInfo, setResumeInfo } = useContext(ResumeInfoContext);
 
   useEffect(() => {
-    resumeInfo?.Skills?.length > 0 && setSkillsList(resumeInfo?.Skills)
+    resumeInfo?.Education?.length > 0 && setEducationList(resumeInfo?.Education)
   }, [])
 
   const handleChange = (index, name, value) => {
     setSaved(false);
-    setSkillsList(prev =>
+    setEducationList(prev =>
       prev.map((item, i) => i === index ? { ...item, [name]: value } : item)
     );
   }
 
-  const AddNewSkills = () => {
-    setSkillsList(prev => [...prev, { name: '', rating: 0 }]);
+  const AddNewEducation = () => {
+    setEducationList(prev => [...prev, {
+      universityName: '',
+      degree: '',
+      major: '',
+      startDate: '',
+      endDate: '',
+      description: ''
+    }]);
   }
 
-  const RemoveSkills = () => {
-    setSkillsList(prev => prev.slice(0, -1));
+  const RemoveEducation = () => {
+    setEducationList(prev => prev.slice(0, -1));
   }
 
   const onSave = () => {
-    if (skillsList.some(s => !s.name.trim())) {
-      toast('Please fill in all skill names before saving');
+    if (educationList.some(e => !e.universityName.trim() || !e.degree.trim())) {
+      toast('Please fill in University and Degree before saving');
       return;
     }
     setLoading(true);
     GlobalApi.UpdateResumeDetail(resumeId, {
-      data: { Skills: skillsList.map(({ id, ...rest }) => rest) }
+      data: { Education: educationList.map(({ id, ...rest }) => rest) }
     }).then(() => {
       setLoading(false);
       setSaved(true);
@@ -55,43 +60,85 @@ function Skills() {
   }
 
   useEffect(() => {
-    setResumeInfo(prev => ({ ...prev, Skills: skillsList }));
-  }, [skillsList])
+    setResumeInfo(prev => ({ ...prev, Education: educationList }));
+  }, [educationList])
 
   return (
     <div className='p-5 shadow-lg rounded-lg border-t-primary border-t-4 mt-10'>
-      <h2 className='font-bold text-lg'>Skills</h2>
-      <p className='text-gray-500 text-sm'>Add your top professional key skills</p>
+      <h2 className='font-bold text-lg'>Education</h2>
+      <p className='text-gray-500 text-sm'>Add your educational background</p>
 
       {/* Empty state */}
-      {skillsList.length === 0 && (
+      {educationList.length === 0 && (
         <div className='flex flex-col items-center justify-center py-10 text-center border-2 border-dashed border-gray-200 rounded-lg mt-5'>
-          <Lightbulb className='h-8 w-8 text-gray-300 mb-2' />
-          <p className='text-sm text-gray-400'>No skills added yet</p>
-          <p className='text-xs text-gray-300 mt-1'>Click "+ Add More Skill" to get started</p>
+          <GraduationCap className='h-8 w-8 text-gray-300 mb-2' />
+          <p className='text-sm text-gray-400'>No education added yet</p>
+          <p className='text-xs text-gray-300 mt-1'>Click "+ Add Education" to get started</p>
         </div>
       )}
 
       <div className='mt-3'>
-        {skillsList.map((item, index) => (
-          <div key={index} className='flex justify-between items-center mb-2 border rounded-lg p-3 gap-4'>
-            <div className='flex-1'>
-              <label className='text-xs text-gray-500'>Skill Name</label>
-              <Input
-                className={!item.name.trim() && item.name !== undefined
-                  ? 'border-amber-300'
-                  : ''}
-                defaultValue={item.name}
-                onChange={(e) => handleChange(index, 'name', e.target.value)}
-              />
-            </div>
-            <div className='flex flex-col items-center'>
-              <label className='text-xs text-gray-500 mb-1'>Proficiency</label>
-              <Rating
-                style={{ maxWidth: 120 }}
-                value={item.rating}
-                onChange={(v) => handleChange(index, 'rating', v)}
-              />
+        {educationList.map((item, index) => (
+          <div key={index} className='border rounded-lg p-4 mb-4'>
+            <h3 className='text-sm font-semibold text-gray-600 mb-3'>
+              Education #{index + 1}
+            </h3>
+            <div className='grid grid-cols-2 gap-3'>
+
+              <div className='col-span-2'>
+                <label className='text-xs text-gray-500'>University / School Name <span className='text-red-400'>*</span></label>
+                <Input
+                  className={!item.universityName.trim() ? 'border-amber-300' : ''}
+                  defaultValue={item.universityName}
+                  onChange={(e) => handleChange(index, 'universityName', e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className='text-xs text-gray-500'>Degree <span className='text-red-400'>*</span></label>
+                <Input
+                  className={!item.degree.trim() ? 'border-amber-300' : ''}
+                  defaultValue={item.degree}
+                  onChange={(e) => handleChange(index, 'degree', e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className='text-xs text-gray-500'>Major / Field of Study</label>
+                <Input
+                  defaultValue={item.major}
+                  onChange={(e) => handleChange(index, 'major', e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className='text-xs text-gray-500'>Start Date</label>
+                <Input
+                  type='date'
+                  defaultValue={item.startDate}
+                  onChange={(e) => handleChange(index, 'startDate', e.target.value)}
+                />
+              </div>
+
+              <div>
+                <label className='text-xs text-gray-500'>End Date</label>
+                <Input
+                  type='date'
+                  defaultValue={item.endDate}
+                  onChange={(e) => handleChange(index, 'endDate', e.target.value)}
+                />
+              </div>
+
+              <div className='col-span-2'>
+                <label className='text-xs text-gray-500'>Description</label>
+                <textarea
+                  className='w-full border rounded-md p-2 text-sm mt-1 min-h-[80px] resize-none focus:outline-none focus:ring-2 focus:ring-primary/30'
+                  defaultValue={item.description}
+                  placeholder='Relevant coursework, achievements, activities...'
+                  onChange={(e) => handleChange(index, 'description', e.target.value)}
+                />
+              </div>
+
             </div>
           </div>
         ))}
@@ -99,14 +146,14 @@ function Skills() {
 
       <div className='flex justify-between mt-4'>
         <div className='flex gap-2'>
-          <Button variant="outline" onClick={AddNewSkills} className="text-primary">
-            + Add More Skill
+          <Button variant="outline" onClick={AddNewEducation} className="text-primary">
+            + Add Education
           </Button>
           <Button
             variant="outline"
-            onClick={RemoveSkills}
+            onClick={RemoveEducation}
             className="text-primary"
-            disabled={skillsList.length === 0}
+            disabled={educationList.length === 0}
           >
             - Remove
           </Button>
@@ -114,9 +161,7 @@ function Skills() {
         <Button
           disabled={loading}
           onClick={onSave}
-          className={saved
-            ? 'bg-green-500 hover:bg-green-600 transition-colors duration-300'
-            : ''}
+          className={saved ? 'bg-green-500 hover:bg-green-600 transition-colors duration-300' : ''}
         >
           {loading
             ? <LoaderCircle className='animate-spin' />
@@ -130,4 +175,4 @@ function Skills() {
   )
 }
 
-export default Skills
+export default Education

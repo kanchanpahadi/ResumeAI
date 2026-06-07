@@ -9,11 +9,11 @@ import { toast } from 'sonner';
 
 const FIELDS = [
   { name: 'firstName', label: 'First Name', colSpan: 1 },
-  { name: 'lastName',  label: 'Last Name',  colSpan: 1 },
-  { name: 'jobTitle',  label: 'Job Title',  colSpan: 2 },
-  { name: 'address',   label: 'Address',    colSpan: 2 },
-  { name: 'Phone',     label: 'Phone',      colSpan: 1 },
-  { name: 'email',     label: 'Email',      colSpan: 1 },
+  { name: 'lastName', label: 'Last Name', colSpan: 1 },
+  { name: 'jobTitle', label: 'Job Title', colSpan: 2 },
+  { name: 'address', label: 'Address', colSpan: 2 },
+  { name: 'Phone', label: 'Phone', colSpan: 1, type: 'phone' },
+  { name: 'email', label: 'Email', colSpan: 1, type: 'email' },
 ]
 
 function PersonalDetail({ enabledNext }) {
@@ -35,10 +35,32 @@ function PersonalDetail({ enabledNext }) {
 
   const validate = () => {
     const newErrors = {};
-    FIELDS.forEach(({ name }) => {
-      const val = formData[name] ?? resumeInfo?.[name] ?? '';
-      if (!val.toString().trim()) newErrors[name] = true;
+
+    FIELDS.forEach(({ name, type }) => {
+      const val = (formData[name] ?? resumeInfo?.[name] ?? '').toString().trim();
+
+      if (!val) {
+        newErrors[name] = `${name === 'Phone' ? 'Phone' : name.charAt(0).toUpperCase() + name.slice(1)} is required`;
+        return;
+      }
+
+      if (type === 'email') {
+        const emailRegex = /^[^\s@]+@gmail\.com$/;
+        if (!emailRegex.test(val)) {
+          newErrors[name] = 'Valid email is required ';
+        }
+      }
+
+      if (type === 'phone') {
+        const digitsOnly = val.replace(/\D/g, '');
+        if (digitsOnly.length !== 10) {
+          newErrors[name] = 'Enter a valid 10 digit phone number';
+        } else if (!digitsOnly.startsWith('97') && !digitsOnly.startsWith('98')) {
+          newErrors[name] = 'Please enter a valid number';
+        }
+      }
     });
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -82,7 +104,9 @@ function PersonalDetail({ enabledNext }) {
                 className={`form-input${errors[name] ? ' border-red-400 focus-visible:ring-red-300' : ''}`}
               />
               {errors[name] && (
-                <p className="form-error">{label} is required</p>
+                <p className="form-error">
+                  {typeof errors[name] === 'string' ? errors[name] : `${label} is required`}
+                </p>
               )}
             </div>
           ))}
