@@ -2,8 +2,9 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.jsx";
 import "./index.css";
-import { RouterProvider, createBrowserRouter } from "react-router-dom";
+import { RouterProvider, createBrowserRouter, Navigate } from "react-router-dom";
 import SignInPage from "./auth/sign-in/index.jsx";
+import SignUpPage from "./auth/sign-up/index.jsx";
 import Home from "./home/index.jsx";
 import Dashboard from "./dashboard/index.jsx";
 import { ClerkProvider } from "@clerk/clerk-react";
@@ -11,6 +12,7 @@ import EditResume from "./dashboard/resume/[resumeId]/edit/EditResume.jsx";
 import ViewResume from "./my-resume/[resumeId]/view/index.jsx";
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -29,14 +31,25 @@ const router = createBrowserRouter([
       },
     ],
   },
-  ,
   {
     path: "/auth/sign-in",
     element: <SignInPage />,
   },
   {
+    path: "/auth/sign-up",
+    element: <SignUpPage />,
+  },
+  {
+    path: "/auth/sign-up/verify-email-address",
+    element: <SignUpPage />,
+  },
+  {
     path: "/my-resume/:resumeId/view",
     element: <ViewResume />,
+  },
+  {
+    path: "*",
+    element: <Navigate to="/" replace />,
   },
 ]);
 

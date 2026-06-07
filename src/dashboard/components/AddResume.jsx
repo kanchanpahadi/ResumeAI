@@ -3,6 +3,8 @@ import  { useState, useRef } from 'react'
 import {
   Dialog,
   DialogContent,
+  DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog"
 import { v4 as uuidv4 } from 'uuid'
 import GlobalApi from './../../../service/GlobalApi'
@@ -20,17 +22,38 @@ async function callGroq(prompt) {
     },
     body: JSON.stringify({
       model: 'llama-3.3-70b-versatile',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.3,
-      max_tokens: 2000
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a resume parser. Always respond with valid JSON only. No markdown, no explanation, no code blocks. Just the raw JSON object.'
+        },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.1,
+      max_tokens: 3000
     })
   })
   const data = await res.json()
   const text = data.choices?.[0]?.message?.content || ''
-  const cleaned = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim()
-  const match = cleaned.match(/\{[\s\S]*\}/)
-  if (!match) throw new Error('No JSON found')
-  return JSON.parse(match[0])
+
+  let jsonStr = text
+    .replace(/```json\s*/gi, '')
+    .replace(/```\s*/g, '')
+    .trim()
+
+  try { return JSON.parse(jsonStr) } catch {}
+
+  const match = jsonStr.match(/\{[\s\S]*\}/)
+  if (match) {
+    try { return JSON.parse(match[0]) } catch {}
+  }
+
+  console.warn('Could not parse JSON, using empty structure')
+  return {
+    firstName: '', lastName: '', jobTitle: '', address: '',
+    Phone: '', email: '', Summary: '',
+    Experience: [], Education: [], Skills: []
+  }
 }
 
 async function extractPdfText(file) {
@@ -71,7 +94,6 @@ function AddResume() {
     setTimeout(reset, 300)
   }
 
-  /* ── Create blank resume ── */
   const onCreate = async () => {
     if (!resumeTitle.trim()) return
     setStep('saving')
@@ -93,7 +115,6 @@ function AddResume() {
     }
   }
 
-  /* ── Upload + parse PDF ── */
   const processPdf = async (file) => {
     if (!file || file.type !== 'application/pdf') {
       setError('Please upload a valid PDF file.')
@@ -179,16 +200,11 @@ ${rawText.slice(0, 4000)}`
     <div>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap');
-
         .ar-choice-card {
-          border: 1.5px solid #e8e5de;
-          border-radius: 16px;
-          padding: 1.6rem 1.4rem;
-          cursor: pointer;
-          transition: all 0.2s;
-          background: white;
-          text-align: left;
-          width: 100%;
+          border: 1.5px solid #e8e5de; border-radius: 16px;
+          padding: 1.6rem 1.4rem; cursor: pointer;
+          transition: all 0.2s; background: white;
+          text-align: left; width: 100%;
         }
         .ar-choice-card:hover {
           border-color: #0d0d0d;
@@ -196,66 +212,45 @@ ${rawText.slice(0, 4000)}`
           transform: translateY(-2px);
         }
         .ar-choice-card.upload:hover { border-color: #2a6ef5; }
-
         .ar-icon-wrap {
           width: 44px; height: 44px; border-radius: 12px;
           display: flex; align-items: center; justify-content: center;
           margin-bottom: 0.9rem;
         }
-        .ar-title {
-          font-size: 0.95rem; font-weight: 700; color: #0d0d0d;
-          margin-bottom: 0.3rem; font-family: 'DM Sans', sans-serif;
-        }
-        .ar-desc {
-          font-size: 0.76rem; color: #888; line-height: 1.5;
-          font-family: 'DM Sans', sans-serif;
-        }
-
+        .ar-title { font-size: 0.95rem; font-weight: 700; color: #0d0d0d; margin-bottom: 0.3rem; }
+        .ar-desc { font-size: 0.76rem; color: #888; line-height: 1.5; }
         .ar-input {
           width: 100%; border: 1.5px solid #e8e5de;
           border-radius: 10px; padding: 0.6rem 0.9rem;
-          font-size: 0.85rem; font-family: 'DM Sans', sans-serif;
-          outline: none; transition: border-color 0.2s;
-          box-sizing: border-box;
+          font-size: 0.85rem; outline: none;
+          transition: border-color 0.2s; box-sizing: border-box;
         }
         .ar-input:focus { border-color: #2a6ef5; }
-
         .ar-btn {
           display: inline-flex; align-items: center; justify-content: center;
           gap: 0.4rem; padding: 0.6rem 1.3rem;
           border-radius: 100px; border: none; cursor: pointer;
-          font-size: 0.82rem; font-weight: 600;
-          font-family: 'DM Sans', sans-serif;
-          transition: all 0.2s;
+          font-size: 0.82rem; font-weight: 600; transition: all 0.2s;
         }
         .ar-btn.primary { background: #0d0d0d; color: white; }
         .ar-btn.primary:hover { background: #2a6ef5; }
         .ar-btn.primary:disabled { background: #d1d5db; cursor: not-allowed; }
         .ar-btn.ghost { background: transparent; color: #888; border: 1px solid #e8e5de; }
         .ar-btn.ghost:hover { border-color: #0d0d0d; color: #0d0d0d; }
-
         .ar-drop-zone {
-          border: 2px dashed #e0ddd6;
-          border-radius: 14px;
-          padding: 2.5rem 1.5rem;
-          text-align: center;
-          cursor: pointer;
-          background: #faf8f3;
-          transition: all 0.2s;
+          border: 2px dashed #e0ddd6; border-radius: 14px;
+          padding: 2.5rem 1.5rem; text-align: center;
+          cursor: pointer; background: #faf8f3; transition: all 0.2s;
         }
         .ar-drop-zone.drag { border-color: #2a6ef5; background: #eff6ff; }
         .ar-drop-zone:hover { border-color: #aaa; }
-
         @keyframes ar-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .ar-spin { animation: ar-spin 1s linear infinite; }
-
         .add-card {
-          padding: 3.5rem 1rem;
-          border: 2px dashed #e0ddd6;
+          padding: 3.5rem 1rem; border: 2px dashed #e0ddd6;
           display: flex; align-items: center; justify-content: center;
           background: #faf8f3; border-radius: 16px;
-          height: 280px; cursor: pointer;
-          transition: all 0.22s;
+          height: 280px; cursor: pointer; transition: all 0.22s;
         }
         .add-card:hover {
           border-color: #2a6ef5; background: #eff6ff;
@@ -264,7 +259,6 @@ ${rawText.slice(0, 4000)}`
         }
       `}</style>
 
-      {/* ── Dashboard card ── */}
       <div className="add-card" onClick={() => setOpenDialog(true)}>
         <div style={{ textAlign: 'center' }}>
           <div style={{
@@ -275,45 +269,33 @@ ${rawText.slice(0, 4000)}`
           }}>
             <PlusSquare size={22} color="white" />
           </div>
-          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.85rem', fontWeight: 600, color: '#0d0d0d' }}>
-            New Resume
-          </div>
-          <div style={{ fontFamily: "'DM Sans', sans-serif", fontSize: '0.72rem', color: '#aaa', marginTop: '0.2rem' }}>
-            Create or import
-          </div>
+          <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0d0d0d' }}>New Resume</div>
+          <div style={{ fontSize: '0.72rem', color: '#aaa', marginTop: '0.2rem' }}>Create or import</div>
         </div>
       </div>
 
-      {/* ── Dialog ── */}
       <Dialog open={openDialog} onOpenChange={(val) => { if (!val) close() }}>
         <DialogContent
-          style={{ fontFamily: "'DM Sans', sans-serif", borderRadius: 20, padding: 0, overflow: 'hidden', maxWidth: 440, border: 'none' }}
+          style={{ borderRadius: 20, padding: 0, overflow: 'hidden', maxWidth: 440, border: 'none' }}
           onInteractOutside={close}
         >
-          {/* Header */}
-          <div style={{ padding: '1.6rem 1.6rem 0', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-            <div>
-              <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.3rem', fontWeight: 700, color: '#0d0d0d', margin: 0 }}>
-                {step === 'choice'  ? 'New Resume'           :
-                 step === 'scratch' ? 'Create from Scratch'  :
-                 step === 'upload'  ? 'Import PDF Resume'    :
-                 step === 'parsing' ? 'Importing…'           :
-                 'Creating…'}
-              </h2>
-              <p style={{ fontSize: '0.75rem', color: '#aaa', marginTop: '0.3rem', marginBottom: 0 }}>
-                {step === 'choice'  ? 'How would you like to start?' :
-                 step === 'scratch' ? 'Give your resume a title to begin.' :
-                 step === 'upload'  ? 'Upload your existing PDF resume.' :
-                 step === 'parsing' ? statusMsg :
-                 'Setting things up…'}
-              </p>
-            </div>
+          <div style={{ padding: '1.6rem 1.6rem 0' }}>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: '1.3rem', fontWeight: 700, color: '#0d0d0d', margin: 0 }}>
+              {step === 'choice'  ? 'New Resume'          :
+               step === 'scratch' ? 'Create from Scratch' :
+               step === 'upload'  ? 'Import PDF Resume'   :
+               step === 'parsing' ? 'Importing…'          : 'Creating…'}
+            </h2>
+            <p style={{ fontSize: '0.75rem', color: '#aaa', marginTop: '0.3rem', marginBottom: 0 }}>
+              {step === 'choice'  ? 'How would you like to start?'   :
+               step === 'scratch' ? 'Give your resume a title to begin.' :
+               step === 'upload'  ? 'Upload your existing PDF resume.'   :
+               step === 'parsing' ? statusMsg : 'Setting things up…'}
+            </p>
           </div>
 
-          {/* Body */}
           <div style={{ padding: '1.4rem 1.6rem 1.6rem' }}>
 
-            {/* ── CHOICE ── */}
             {step === 'choice' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <button className="ar-choice-card" onClick={() => setStep('scratch')}>
@@ -323,7 +305,6 @@ ${rawText.slice(0, 4000)}`
                   <div className="ar-title">Create from Scratch</div>
                   <div className="ar-desc">Start with a blank resume and fill in your details step by step with AI assistance.</div>
                 </button>
-
                 <button className="ar-choice-card upload" onClick={() => setStep('upload')}>
                   <div className="ar-icon-wrap" style={{ background: '#eff6ff' }}>
                     <Upload size={20} color="#2a6ef5" />
@@ -334,7 +315,6 @@ ${rawText.slice(0, 4000)}`
               </div>
             )}
 
-            {/* ── FROM SCRATCH ── */}
             {step === 'scratch' && (
               <div>
                 <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#555', letterSpacing: '0.08em', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>
@@ -358,7 +338,6 @@ ${rawText.slice(0, 4000)}`
               </div>
             )}
 
-            {/* ── UPLOAD ── */}
             {step === 'upload' && (
               <div>
                 <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#555', letterSpacing: '0.08em', textTransform: 'uppercase', display: 'block', marginBottom: '0.5rem' }}>
@@ -371,7 +350,6 @@ ${rawText.slice(0, 4000)}`
                   onChange={e => setResumeTitle(e.target.value)}
                   style={{ marginBottom: '1rem' }}
                 />
-
                 <div
                   className={`ar-drop-zone ${dragging ? 'drag' : ''}`}
                   onDragOver={e => { e.preventDefault(); setDragging(true) }}
@@ -381,32 +359,25 @@ ${rawText.slice(0, 4000)}`
                 >
                   <input ref={inputRef} type="file" accept=".pdf" style={{ display: 'none' }} onChange={e => processPdf(e.target.files[0])} />
                   <Upload size={28} style={{ color: '#aaa', margin: '0 auto 0.7rem', display: 'block' }} />
-                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0d0d0d', marginBottom: '0.25rem' }}>
-                    Drop your PDF here
-                  </div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0d0d0d', marginBottom: '0.25rem' }}>Drop your PDF here</div>
                   <div style={{ fontSize: '0.73rem', color: '#aaa' }}>or click to browse</div>
                 </div>
-
                 {error && <p style={{ fontSize: '0.73rem', color: '#ef4444', marginTop: '0.6rem' }}>{error}</p>}
-
                 <div style={{ marginTop: '1rem' }}>
                   <button className="ar-btn ghost" onClick={() => { setStep('choice'); setError('') }}>← Back</button>
                 </div>
               </div>
             )}
 
-            {/* ── PARSING / SAVING ── */}
             {(step === 'parsing' || step === 'saving') && (
               <div style={{ textAlign: 'center', padding: '2rem 1rem' }}>
                 <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.2rem' }}>
-                  <Loader2 size={26} color="#2a6ef5" className="ar-spin" style={{ animation: 'ar-spin 1s linear infinite' }} />
+                  <Loader2 size={26} color="#2a6ef5" className="ar-spin" />
                 </div>
                 <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#0d0d0d', marginBottom: '0.4rem' }}>
                   {statusMsg || 'Creating your resume…'}
                 </div>
-                <div style={{ fontSize: '0.75rem', color: '#aaa' }}>
-                  This takes just a few seconds
-                </div>
+                <div style={{ fontSize: '0.75rem', color: '#aaa' }}>This takes just a few seconds</div>
               </div>
             )}
           </div>

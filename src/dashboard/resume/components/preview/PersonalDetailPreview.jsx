@@ -1,41 +1,27 @@
+import React from 'react'
 
-
-function ExperiencePreview({ resumeInfo }) {
+function PersonalDetailPreview({ resumeInfo }) {
   const theme = resumeInfo?.themecolor || resumeInfo?.themeColor || '#2a6ef5'
 
   return (
-    <div className='my-6'>
-      <h2 className='text-center font-bold text-sm mb-2' style={{ color: theme }}>
-        Professional Experience
+    <div>
+      <h2 className='font-bold text-xl text-center' style={{ color: theme }}>
+        {resumeInfo?.firstName} {resumeInfo?.lastName}
       </h2>
-      <hr style={{ borderColor: theme }} />
 
-      {resumeInfo?.Experience?.map((experience, index) => (
-        <div key={index} className='my-5'>
-          <h2 className='text-sm font-bold' style={{ color: theme }}>
-            {experience?.title}
-          </h2>
-          <h2 className='text-xs flex justify-between'>
-            <span>
-              {[experience?.companyName, experience?.city, experience?.state]
-                .filter(Boolean)
-                .join(', ')}
-            </span>
-            <span>
-              {experience?.startDate}
-              {(experience?.endDate || experience?.currentlyWorking)
-                ? ` To ${experience?.currentlyWorking ? 'Present' : experience?.endDate}`
-                : ''}
-            </span>
-          </h2>
-          <div
-            className='text-xs my-2 [&>ul]:list-disc [&>ul]:ml-4 [&>ul]:pl-2 [&>p]:text-justify [&>ul>li]:text-justify'
-            dangerouslySetInnerHTML={{ __html: experience?.workSummery }}
-          />
-        </div>
-      ))}
+      <h3 className='text-sm text-center font-medium my-1' style={{ color: theme }}>
+        {resumeInfo?.jobTitle}
+      </h3>
+
+      <hr className='my-2' style={{ borderColor: theme }} />
+
+      <p className='text-xs text-center text-gray-500'>
+        {[resumeInfo?.address, resumeInfo?.Phone, resumeInfo?.email]
+          .filter(Boolean)
+          .join(' | ')}
+      </p>
     </div>
   )
 }
 
-export default ExperiencePreview
+export default PersonalDetailPreview
